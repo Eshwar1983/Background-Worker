@@ -5,7 +5,7 @@ from pymongo.errors import ConnectionFailure, OperationFailure
 
 def fetch_mongodb_data():
     # 1. Safely retrieve the connection URI from Render's environment
-    mongo_uri = os.environ.get("mongodb+srv://eshwargowda19_db_user:DG6Pq4EMcwylcZK6@cluster0.8vevz6x.mongodb.net/?appName=Cluster0")
+    mongo_uri = os.environ.get("MONGO_URI")
     
     if not mongo_uri:
         print("Error: MONGO_URI environment variable is not set.", file=sys.stderr)
