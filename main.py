@@ -1,29 +1,47 @@
+import os
+import sys
 from pymongo import MongoClient
-from flask import Flask, jsonify, request
-from flask_cors import CORS
-from bson.objectid import ObjectId
+from pymongo.errors import ConnectionFailure, OperationFailure
 
-app = Flask(__name__)
-CORS(app)
+def fetch_mongodb_data():
+    # 1. Safely retrieve the connection URI from Render's environment
+    mongo_uri = os.environ.get("mongodb+srv://eshwargowda19_db_user:DG6Pq4EMcwylcZK6@cluster0.8vevz6x.mongodb.net/?appName=Cluster0")
+    
+    if not mongo_uri:
+        print("Error: MONGO_URI environment variable is not set.", file=sys.stderr)
+        return
 
-# Connect to MongoDB
-MONGO_URI = "mongodb+srv://eshwargowda19_db_user:DG6Pq4EMcwylcZK6@cluster0.8vevz6x.mongodb.net/?appName=Cluster0"
-client = MongoClient(MONGO_URI)
-db = client["school_db"]
-collection = db["students"]
+    try:
+        # 2. Initialize the MongoDB Client
+        client = MongoClient(mongo_uri)
+        
+        # 3. Access your database and collection (Replace with your actual names)
+        db = client["school_db"]
+        collection = db["students"]
+        
+        # 4. Fetch data
+        print("Fetching data from MongoDB...")
+        
+        # Example A: Fetch just ONE document
+        single_doc = collection.find_one()
+        print("\n--- Single Document Result ---")
+        print(single_doc)
+        
+        # Example B: Fetch ALL documents (with a limit to prevent memory overload)
+        all_docs = collection.find().limit(10)
+        print("\n--- Multiple Documents Result ---")
+        for doc in all_docs:
+            print(doc)
+            
+    except ConnectionFailure:
+        print("Error: Failed to connect to the MongoDB server.", file=sys.stderr)
+    except OperationFailure as e:
+        print(f"Database operation failed: {e}", file=sys.stderr)
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}", file=sys.stderr)
+    finally:
+        # 5. Clean up connection
+        client.close()
 
-@app.route('/api/data', methods=['GET'])
-def get_data():
-  try:
-    documents = []
-    # Fetch all documents from the collection
-    for doc in collection.find():
-      # Convert ObjectId to string for JSON compatibility
-      doc['_id'] = str(doc['_id'])
-      documents.append(doc)
-    return jsonify(documents)
-  except Exception as e:
-    return jsonify({"error": str(e)}), 500
-
-if __name__ == '__main__':
-  app.run(port=5000, debug=True)
+if __name__ == "__main__":
+    fetch_mongodb_data()
