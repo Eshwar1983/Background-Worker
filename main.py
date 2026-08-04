@@ -1,28 +1,29 @@
-import os
-import requests
-import logging
+from pymongo import MongoClient
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from bson.objectid import ObjectId
 
-# Set up logging to view outputs in Render logs
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+app = Flask(__name__)
+CORS(app)
 
-def fetch_crypto_data():
-    url = "https://coingecko.com"
-    
-    try:
-        logger.info("Fetching data from API...")
-        response = requests.get(url, timeout=10)
-        response.raise_for_status() # Raise error for bad status codes
-        
-        data = response.json()
-        btc_price = data["bitcoin"]["usd"]
-        
-        logger.info(f"Successfully fetched data! Current BTC Price: ${btc_price} USD")
-        
-        # Optional: Save to a database or external cloud storage here
-        
-    except requests.exceptions.RequestException as e:
-        logger.error(f"An error occurred: {e}")
+# Connect to MongoDB
+MONGO_URI = "mongodb+srv://eshwargowda19_db_user:DG6Pq4EMcwylcZK6@cluster0.8vevz6x.mongodb.net/?appName=Cluster0"
+client = MongoClient(MONGO_URI)
+db = client["school_db"]
+collection = db["students"]
 
-if __name__ == "__main__":
-    fetch_crypto_data()
+@app.route('/api/data', methods=['GET'])
+def get_data():
+  try:
+    documents = []
+    # Fetch all documents from the collection
+    for doc in collection.find():
+      # Convert ObjectId to string for JSON compatibility
+      doc['_id'] = str(doc['_id'])
+      documents.append(doc)
+    return jsonify(documents)
+  except Exception as e:
+    return jsonify({"error": str(e)}), 500
+
+if __name__ == '__main__':
+  app.run(port=5000, debug=True)
